@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Client;
+use App\Services\ApiResponse;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -14,7 +15,7 @@ class ClientController extends Controller
     public function index(): JsonResponse
     {
         // return all clients in the database
-        return $this->sendResponse(true, 'success', Client::all(), 200);
+        return ApiResponse::success(Client::all());
     }
 
     /**
@@ -33,7 +34,7 @@ class ClientController extends Controller
         $client = Client::create($request->all());
 
         // return response
-        return $this->sendResponse(true, 'Client created successfully', $client, 200);
+        return ApiResponse::success($client);
     }
     
     /**
@@ -45,9 +46,9 @@ class ClientController extends Controller
         $client = Client::find($id);
 
         if ($client) {
-            return $this->sendResponse(true, 'success', $client, 200);
+            return ApiResponse::success($client);
         } else {
-            return $this->sendResponse(false, 'Client not found', null, 404);
+            return ApiResponse::error('Client not found');
         }
     }
     
@@ -63,12 +64,16 @@ class ClientController extends Controller
             'phone' => 'required'
         ]);
         
-        // update client
+        // find client
         $client = Client::find($id);
-        $client->update($request->all());
-        
-        // return response
-        return $this->sendResponse(true, 'Client updated successfully', $client, 200);
+        if ($client) {
+            // update client
+            $client->update($request->all());
+            // return response
+            return ApiResponse::success($client);
+        } else {
+            return ApiResponse::error('Client not found');
+        }
     }
 
     /**
@@ -82,22 +87,10 @@ class ClientController extends Controller
         if ($client) {
             // delete client
             $client->delete();
-
-            return $this->sendResponse(true, 'Client deleted successfully', null, 200);
+            // return response
+            return ApiResponse::success('Client deleted successfully');
         } else {
-            return $this->sendResponse(false, 'Client not found', null, 404);
+            return ApiResponse::error('Client not found');
         }
-    }
-
-    private function sendResponse(bool $success, string $message, object|null $data, int $status): JsonResponse
-    {
-        return response()->json(
-            [
-                'success' => $success,
-                'message' => $message,
-                'data' => $data
-            ],
-            $status
-        );
     }
 }
